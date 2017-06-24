@@ -283,6 +283,8 @@ namespace RSABigInt
             Factor_Base(N1);
 
             uint N_smooths = (uint)(factor_base.Length * 1.1);
+            if ((N_smooths & 1) == 1)
+                N_smooths++;                // make it even
             Qx = new smooth_num[N_smooths];
             Qx.Initialize();
             long k = -1;
@@ -291,7 +293,7 @@ namespace RSABigInt
             Task[] smooth = new Task[2];
             smooth[0] = Task.Run(() =>
             {
-                while (k < N_smooths)
+                while (k < N_smooths-1)
                 {
                     BigInteger sm = i * i - N1;
                     uint[] expo1 = GetPrimeFactors(sm);
@@ -323,7 +325,7 @@ namespace RSABigInt
 
             smooth[1] = Task.Run(() =>
             {
-                while (k < factor_base.Length)
+                while (k < N_smooths-1)
                 {
                     BigInteger sm = N1 - j * j;
                     uint[] expo1 = GetPrimeFactors(sm);
@@ -703,7 +705,7 @@ namespace RSABigInt
         public void Smooth_Nums_Test(string S1)
         {
             BigInteger N;
-            N = BigInteger.Parse("21818232425302600378616644247667406319");
+            //N = BigInteger.Parse("21818232425302600378616644247667406319");
             // 2495.8 s, 2620 primes
             // 7217.7 s, 2122 primes, 4244 smooth numbers
             //Factor base: 1732 primes.
@@ -737,7 +739,7 @@ namespace RSABigInt
             // 3149.7 s, 899 primes, 1798 smooth numbers.
 
 
-            //N = BigInteger.Parse("43272494503935639032000984197");
+            N = BigInteger.Parse("43272494503935639032000984197");
             // SmoothNumbers
             // 2315.5 s, 286 primes, 572 smooth numbers.
             // 163.0 s,   610 primes
@@ -751,10 +753,15 @@ namespace RSABigInt
             // 115.3 s,  610 primes
             // 111.0 s, 715 primes
             // 109.9 s, 740 primes
+            
+            // Factor base: 1199 primes.
+            // Collected 1318 smooth numbers.
+            // Elapsed time: 182.9 s
+            
             // 254.0 s, 4814 primes
 
             //Smooth_Numbers("990632981767960443643259");                           // 20.0 s,   154 primes         10.5 s, 596 primes           16.4 s, 1117 primes 
-            //N = BigInteger.Parse("990632981767960443643259");                           //                             9.9 s, 596 primes          14.8 s, 1117 primes
+            //N = BigInteger.Parse("990632981767960443643259");                           // 9.9 s, 596 primes          14.8 s, 1117 primes
 
             //N = BigInteger.Parse("462717344089999398416479");                           // 5.9 s,    269 primes
             // 34.1 s, 126 primes, 252 smooth numbers
@@ -768,8 +775,40 @@ namespace RSABigInt
             // this one will take HOURS!
             //N = BigInteger.Parse("2017075389938133575596113187311764342781574681");
 
+            // still takes HOURS!
+            //N = BigInteger.Parse("4667112842259357358945637211043535865743957407");
+
+            // Quicker...
+            //N = BigInteger.Parse("492236049596491202533");
+
+            // Factor base: 149 primes.
+            // Collected 164 smooth numbers.
+            // Elapsed time: 7.3 s
+            //N = BigInteger.Parse("60052625181117476962049");
+
+            // Factor base: 307 primes.
+            // Collected 338 smooth numbers.
+            // Elapsed time: 67.5 s
+            //N = BigInteger.Parse("13591577121784133748648767");
+
+            // Factor base: 424 primes.
+            // Collected 466 smooth numbers.
+            // Elapsed time: 20.5 s 
+            //N = BigInteger.Parse("1024967568118884255087603281");
+
+
+            // Factor base: 553 primes.
+            // Collected 608 smooth numbers.
+            //Elapsed time: 47.5 s
+
+            // Factor base: 873 primes.
+            // Collected 960 smooth numbers.
+            // Elapsed time: 37.2 s
+            //N = BigInteger.Parse("30054730572675466537888216717");
+
+
             double Temp = BigInteger.Log(N);
-            uint sieve_max= (uint)Math.Exp(Math.Sqrt(Temp * Math.Log(Temp)) * 0.53);
+            uint sieve_max= (uint)Math.Exp(Math.Sqrt(Temp * Math.Log(Temp)) * 0.6);        // twiddle-factor
             prime_sieve(sieve_max);
 
             //uint SieveLimit = (uint)Math.Exp(8.5 + 0.015 * Temp);

@@ -187,3 +187,10 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
+/Program (1).cs
+/Copy of Program (1).cs
+*.ide
+*.lock
+*.ide-wal
+*.dtbcache
+/.vs/RSABigInt/v15/Server/sqlite3/storage.ide-shm

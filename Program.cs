@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Numerics;
 using System.Reflection;
 using System.Threading;
@@ -438,10 +437,9 @@ namespace RSABigInt
                                     Interlocked.Increment(ref k);
                                 }
                             }
-                            catch (IndexOutOfRangeException ex)
+                            catch (IndexOutOfRangeException e)
                             {
                                 loopState.Stop();
-                                WriteLine("Caught exception: " + ex.Message);
                             }
                         }
                 );
@@ -525,67 +523,35 @@ namespace RSABigInt
                             WriteLine("{0}\n{1}\n{2}\n", X.ToString(), (X + 4).ToString(), (X + 6).ToString());
         }
 
-        public void print_time(TextWriter F)
-        {
-            DateTime dt = DateTime.Now;
-            string str_dt = String.Format("[{0} {1}]", dt.ToLongDateString(), dt.ToLongTimeString());
-            WriteLine("{0}", str_dt);
-            F.WriteLine(str_dt);
-        }
-
         public void TwinPrime_Test()
         {
             int f = 0;
             BigInteger P = RandPrime(20);
 
-            P = BigInteger.Parse("360319392839345637553135866536709551984512794123732758031872111180198922229304457776932421378054786897761488068678057699260620046812993786417078192201501646337");
+            P = BigInteger.Parse("143459829234103681454041418252081595766097129644542014413338193190146299888751764393735706481668312312813012300585846009123759436143773032850526021");
 
-            try
+            DateTime dt = DateTime.Now;
+            for (BigInteger X = P; DateTime.Now < dt.AddHours(1.0d); X += 2)
             {
-                FileStream F_TP = new FileStream(@".\twin_primes.txt", FileMode.Append);
-                using (StreamWriter writer = new StreamWriter(F_TP))
+                switch(f)
                 {
-                    DateTime dt = DateTime.Now;
-                    for (BigInteger X = P; DateTime.Now < dt.AddHours(4.0d); X += 2)
-                    {
-                        switch (f)
-                        {
-                            case 0:
-                                Write("[|]\r");
-                                break;
-                            case 1:
-                                Write("[/]\r");
-                                break;
-                            case 2:
-                                Write("[-]\r");
-                                break;
-                            case 3:
-                                Write("[\\]\r");
-                                break;
-                        }
-                        f++; f %= 4;
-
-                        if (MillerRabin(X, 3) && MillerRabin(X + 2, 3))
-                        {
-                            //WriteLine("[{0} {1}]", DateTime.Now.ToLongDateString(), DateTime.Now.ToLongTimeString());
-                            print_time(writer);
-                            WriteLine("{0}\n{1}\n", X.ToString(), (X + 2).ToString());
-
-                            // output to file
-                            writer.WriteLine(X.ToString());
-                            writer.WriteLine((X + 2).ToString());
-                            writer.WriteLine();
-                            writer.FlushAsync();
-                        }
-                    }
+                    case 0:
+                        Write("|\r");
+                        break;
+                    case 1:
+                        Write("/\r");
+                        break;
+                    case 2:
+                        Write("-\r");
+                        break;
+                    case 3:
+                        Write("\\\r");
+                        break;
                 }
+                f++; f %= 4;
 
-                F_TP.Close();
-            }
-            catch
-            {
-                WriteLine("File opening failed.\n");
-                return;
+                if (MillerRabin(X, 3) && MillerRabin(X + 2, 3))
+                    WriteLine("{0}\n{1}\n", X.ToString(), (X + 2).ToString());
             }
         }
 
@@ -715,7 +681,7 @@ namespace RSABigInt
             double LogT2 = BigInteger.Log10(T2);
 
             //WriteLine("sqrt(2) = {0}\n", c.SquareRoot(BigInteger.Parse("2" + new String('0', 10000))));
-            //int n = 13017;  //7921;   // 1789;   // 3607;
+            int n = 13017;  //7921;   // 1789;   // 3607;
             //WriteLine("fact({1}) = {0}\n", c.Factorial(n).ToString(), n);
             //WriteLine("fibonacci({1}) = {0}\n", c.Fibonacci(n).ToString(), n);
 
@@ -1123,7 +1089,6 @@ namespace RSABigInt
             }
             catch (OperationCanceledException ex)
             {
-                WriteLine("Caught exception: {0}\n", ex.Message);
                 WriteLine("\nOperation cancelled, done.");
             }
             finally
@@ -1142,12 +1107,12 @@ namespace RSABigInt
             Assembly assem = typeof(BigInteger).Assembly;
             BigInteger p = (BigInteger)assem.CreateInstance("System.Numerics.BigInteger");
 
-            //c.TwinPrime_Test();
+            c.TwinPrime_Test();
             //c.PrimeTriplet_Test();
             //c.Mersenne2(23);
             //c.Smooth_Nums_Test("");
             //c.RSA_Numbers();
-            c.ModPow_Misc_Stuff();
+            //c.ModPow_Misc_Stuff();
             //c.Pollard_Rho_Test();
 
             Write("\nPress Enter: ");

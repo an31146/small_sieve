@@ -1,31 +1,36 @@
-﻿using System;
+﻿//#define _DEBUG
+using System;
 using System.Diagnostics;
+using System.IO;
 using System.Numerics;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Algorithms;
+
+using static System.Console;
 
 namespace RSABigInt
 {
-
+#pragma warning disable IDE1006,IDE1005
     class MyBigInteger_Class
     {
-        //const uint ARRAY_SIZE = 0x166e0e21;
-        const uint ARRAY_SIZE = 0x10000000;
-        Random _randObj;
-        uint[] primes;               
-        uint[] factor_base;          //
-        uint[,] matrix;              // 2-dimensional matrix
+        //private const uint ARRAY_SIZE = 0x166e0e21;
+        private const uint ARRAY_SIZE = 0x10000000;
+        private Random _randObj;
+        private uint[] primes;               
+        private uint[] factor_base;          //
+        private uint[,] matrix;              // 2-dimensional matrix
 
-        struct smooth_num
+        private struct smooth_num
         {
             public BigInteger Q_of_x;
             public BigInteger x;
             public uint[] exponents;
         };
-        smooth_num[] Qx;
+        private smooth_num[] Qx;
 
-        Stopwatch sw1 = new Stopwatch();
+        private Stopwatch sw1 = new Stopwatch();
 
         /*
         public Random randObj
@@ -67,7 +72,7 @@ namespace RSABigInt
             else
                 strElapsed = String.Format("{0:F1} s", (float)sw1.ElapsedMilliseconds / 1000);
 
-            Console.WriteLine("prime_sieve time took: {0}", strElapsed);
+            WriteLine("prime_sieve time took: {0}", strElapsed);
         }
 
         BigInteger InverseMod(BigInteger x, BigInteger n)
@@ -144,28 +149,30 @@ namespace RSABigInt
             }   // for
         }
 
-        BigInteger RandPrime(int size)
+        public BigInteger RandPrime(int size)
         {
             BigInteger rand1 = BigInteger.Zero;
             BigInteger rem = BigInteger.Zero;
             BigInteger a = new BigInteger(2);
 
+            rand1 = BigInteger.Zero;
+            for (int i = 0; i < size; i++)
+            {
+                rand1 <<= 24;
+                rand1 += _randObj.Next();
+            }
+            rand1 |= 1;
+            rem = BigInteger.ModPow(a, rand1 - 1, rand1);
+
             while (!rem.IsOne)
             {
-                rand1 = BigInteger.Zero;
-                for (int i = 0; i < size; i++)
-                {
-                    rand1 <<= 24;
-                    rand1 += _randObj.Next();
-                }
-                rand1 |= 1;
-
+                rand1 += 2;
                 rem = BigInteger.ModPow(a, rand1 - 1, rand1);
             }
             return rand1;
         }
 
-        BigInteger TwinPrime(int size)
+        public BigInteger TwinPrime(int size)
         {
             BigInteger twin = RandPrime(size);
             bool found = false;
@@ -178,7 +185,7 @@ namespace RSABigInt
             return twin;
         }
 
-        BigInteger PrimeTriplet(int size)
+        public BigInteger PrimeTriplet(int size)
         {
             BigInteger triple = RandPrime(size);
             bool found = false;
@@ -218,7 +225,7 @@ namespace RSABigInt
             else
                 strElapsed = String.Format("{0:F1} s", (float)sw1.ElapsedMilliseconds / 1000);
 
-            Console.WriteLine("\nSquareRoot() Elapsed time: {0}\n", strElapsed);
+            WriteLine("\nSquareRoot({0})\nElapsed time: {1}\n", n.ToString(), strElapsed);
 
             return q;
         }
@@ -238,9 +245,34 @@ namespace RSABigInt
             else
                 strElapsed = String.Format("{0:F1} s", (float)sw1.ElapsedMilliseconds / 1000);
 
-            Console.WriteLine("\nFactorial() Elapsed time: {0}\n", strElapsed);
+            WriteLine("\nFactorial() Elapsed time: {0}\n", strElapsed);
 
             return fact;
+        }
+
+        public BigInteger Fibonacci(int n)
+        {
+            BigInteger Fn = BigInteger.Zero;
+            BigInteger Fn_plus_one = BigInteger.One;
+
+            sw1.Restart();
+            for (int i = 1; i < n; i++)
+            {
+                BigInteger fib_temp = Fn_plus_one;
+                Fn_plus_one += Fn;
+                Fn = fib_temp;
+            }
+
+            sw1.Stop();
+            string strElapsed;
+            if (sw1.ElapsedMilliseconds <= 1000)
+                strElapsed = String.Format("{0} ms", sw1.ElapsedMilliseconds);
+            else
+                strElapsed = String.Format("{0:F1} s", (float)sw1.ElapsedMilliseconds / 1000);
+
+            WriteLine("\nFactorial() Elapsed time: {0}\n", strElapsed);
+
+            return Fn_plus_one;
         }
 
         uint[] GetPrimeFactors(BigInteger N)
@@ -266,11 +298,11 @@ namespace RSABigInt
             for (int i = 0; i < primes.Length; i++)
                 if (Legendre(N, primes[i]) == 1)
                 {
-                    //Console.Write(factor_base[j] + "\t  ");
+                    //Write(factor_base[j] + "\t  ");
                     factor_base[j++] = primes[i];
                 }
             Array.Resize(ref factor_base, j);
-            Console.WriteLine("Factor base: {0} primes.\n", j);
+            WriteLine("Factor base: {0} primes.\n", j);
         }
 
         public void Smooth_Numbers(BigInteger N1)
@@ -304,7 +336,7 @@ namespace RSABigInt
                         Qx[k].x = i;
                         Qx[k].exponents = expo1;
 
-                        Console.Write(k.ToString() + " smooth numbers\r");
+                        Write(k.ToString() + " smooth numbers\r");
                     }
                     i++;
                     /*
@@ -316,7 +348,7 @@ namespace RSABigInt
                         Qx[k].x = j;
                         Qx[k].exponents = expo1;
                         Interlocked.Increment(ref k);
-                        Console.Write(k.ToString() + " smooth numbers\r");
+                        Write(k.ToString() + " smooth numbers\r");
                     }
                     j--;
                      */ 
@@ -335,7 +367,7 @@ namespace RSABigInt
                         Qx[k].Q_of_x = sm;
                         Qx[k].x = j;
                         Qx[k].exponents = expo1;
-                        Console.Write(k.ToString() + " smooth numbers\r");
+                        Write(k.ToString() + " smooth numbers\r");
                     }
                     j--;
                 }
@@ -350,8 +382,8 @@ namespace RSABigInt
             else
                 strElapsed = String.Format("{0:F1} s", (float)sw1.ElapsedMilliseconds / 1000);
             
-            Console.WriteLine("Collected {0} smooth numbers.\nElapsed time: {1}\n", k, strElapsed);
-            //Console.WriteLine("{0}\t{1}", i - sqrt_N1, sqrt_N1 - j);
+            WriteLine("Collected {0} smooth numbers.\nElapsed time: {1}\n", k, strElapsed);
+            //WriteLine("{0}\t{1}", i - sqrt_N1, sqrt_N1 - j);
         }
 
         public void Smooth_Numbers2(BigInteger N1)
@@ -392,9 +424,11 @@ namespace RSABigInt
                 }
 
                 CancellationTokenSource cancellationSource = new CancellationTokenSource();
-                ParallelOptions options = new ParallelOptions();
-                options.CancellationToken = cancellationSource.Token;
-                Parallel.For(0, Q1x.Length, options, (ii, loopState) =>
+                ParallelOptions parallelOptions = new ParallelOptions()
+                {
+                    CancellationToken = cancellationSource.Token
+                };
+                Parallel.For(0, Q1x.Length, parallelOptions, (ii, loopState) =>
                         {
                             uint[] expo1 = GetPrimeFactors(Q1x[ii].Q_of_x);
                             try
@@ -407,13 +441,14 @@ namespace RSABigInt
                                     Interlocked.Increment(ref k);
                                 }
                             }
-                            catch (IndexOutOfRangeException e)
+                            catch (IndexOutOfRangeException ex)
                             {
                                 loopState.Stop();
+                                WriteLine("Caught exception: " + ex.Message);
                             }
                         }
                 );
-                Console.Write(k.ToString() + " smooth numbers\r");
+                Write(k.ToString() + " smooth numbers\r");
             }   // while (k < factor_base.Length) 
 
             sw1.Stop();
@@ -423,24 +458,24 @@ namespace RSABigInt
             else
                 strElapsed = String.Format("{0:F1} s", (float)sw1.ElapsedMilliseconds / 1000);
 
-            Console.WriteLine("Collected {0} smooth numbers.\nElapsed time: {1}\n", k, strElapsed);
-        }
+            WriteLine("Collected {0} smooth numbers.\nElapsed time: {1}\n", k, strElapsed);
+        }   // class MyBigInteger_Class
 
         int Legendre(BigInteger n, uint p)
-        {
-            BigInteger p1, l;
+            {
+                BigInteger p1, l;
     
-            // assumes p is an odd prime
-            p1 = (p-1)/2;
-            l = BigInteger.ModPow(n, p1, p);
+                // assumes p is an odd prime
+                p1 = (p-1)/2;
+                l = BigInteger.ModPow(n, p1, p);
     
-            if (l == 1)
-                return 1;
-            if (l == 0)
-                return 0;
-            else
-                return -1;
-        }
+                if (l == 1)
+                    return 1;
+                if (l == 0)
+                    return 0;
+                else
+                    return -1;
+            }
 
         bool MillerRabin(BigInteger n, int k)
         {
@@ -484,20 +519,81 @@ namespace RSABigInt
 
         public void PrimeTriplet_Test()
         {
-            for (BigInteger X = PrimeTriplet(4); ; X += 2)
+            for (BigInteger X = PrimeTriplet(10); ; X += 2)
                 if (MillerRabin(X, 2) && MillerRabin(X + 6, 2))
                     if (MillerRabin(X + 2, 2))
-                        Console.WriteLine("{0}\n{1}\n{2}\n", X.ToString(), (X + 2).ToString(), (X + 6).ToString());
+                        WriteLine("{0}\n{1}\n{2}\n", X.ToString(), (X + 2).ToString(), (X + 6).ToString());
                     else
                         if (MillerRabin(X + 4, 2))
-                            Console.WriteLine("{0}\n{1}\n{2}\n", X.ToString(), (X + 4).ToString(), (X + 6).ToString());
+                            WriteLine("{0}\n{1}\n{2}\n", X.ToString(), (X + 4).ToString(), (X + 6).ToString());
+        }
+
+        public void print_time(TextWriter F)
+        {
+            DateTime dt = DateTime.Now;
+            string str_dt = String.Format("[{0} {1}]", dt.ToLongDateString(), dt.ToLongTimeString());
+            WriteLine("{0}", str_dt);
+            F.WriteLine(str_dt);
         }
 
         public void TwinPrime_Test()
         {
-            for (BigInteger X = TwinPrime(12); ; X += 2)
-                if (MillerRabin(X, 2) && MillerRabin(X + 2, 2))
-                    Console.WriteLine("{0}\n{1}\n", X.ToString(), (X + 2).ToString());
+            BigInteger P = RandPrime(2);
+
+            //P = BigInteger.Parse("73691441265324451755454688016488227443216603115803452474404" +
+            //                     "38856224074297757065979116488802297563085196948625534183032" +
+            //                     "6479684230114053050216661580634474512203904229");
+
+            try
+            {
+                FileStream F_TP = new FileStream(@".\twin_primes.txt", FileMode.Append);
+                using (StreamWriter writer = new StreamWriter(F_TP))
+                {
+                    DateTime dt = DateTime.Now;
+                    int f = 0;
+
+                    //for (BigInteger X = P; DateTime.Now < dt.AddHours(4.0d); X += 2)
+                    for (BigInteger X = P; DateTime.Now < dt.AddMinutes(5.0d); X += 2)
+                    {
+                        switch (f)
+                        {
+                            case 0:
+                                Write("[|]\r");
+                                break;
+                            case 1:
+                                Write("[/]\r");
+                                break;
+                            case 2:
+                                Write("[-]\r");
+                                break;
+                            case 3:
+                                Write("[\\]\r");
+                                break;
+                        }
+                        f++; f %= 4;
+
+                        if (MillerRabin(X, 3) && MillerRabin(X + 2, 3))
+                        {
+                            //WriteLine("[{0} {1}]", DateTime.Now.ToLongDateString(), DateTime.Now.ToLongTimeString());
+                            print_time(writer);
+                            WriteLine("{0}\n{1}\n", X.ToString(), (X + 2).ToString());
+
+                            // output to file
+                            writer.WriteLine(X.ToString());
+                            writer.WriteLine((X + 2).ToString());
+                            writer.WriteLine();
+                            writer.FlushAsync();
+                        }
+                    }
+                }
+
+                F_TP.Close();
+            }
+            catch
+            {
+                WriteLine("File opening failed.\n");
+                return;
+            }
         }
 
         public void Mersenne(int n)
@@ -518,11 +614,11 @@ namespace RSABigInt
                     //sw1.Stop();
                     strPow2Sub1 = Pow2Sub1.ToString();
                     if (x < 10)
-                        Console.WriteLine("M[{0}] = {1}", primes[i], strPow2Sub1);
+                        WriteLine("M[{0}] = {1}", primes[i], strPow2Sub1);
                     else
-                        Console.WriteLine("M[{0}] = {1}...{2}", primes[i], strPow2Sub1.Substring(0, 12), strPow2Sub1.Substring(strPow2Sub1.Length - 12, 12));
+                        WriteLine("M[{0}] = {1}...{2}", primes[i], strPow2Sub1.Substring(0, 12), strPow2Sub1.Substring(strPow2Sub1.Length - 12, 12));
                     x++;
-                    //Console.WriteLine("elapsed time: {0} ms\n", sw1.ElapsedMilliseconds);
+                    //WriteLine("elapsed time: {0} ms\n", sw1.ElapsedMilliseconds);
                 }
             });
         }
@@ -557,11 +653,11 @@ namespace RSABigInt
                     Pow2Sub1 = BigInteger.Pow(2, (int)primes[i]) - 1;
                     strPow2Sub1 = Pow2Sub1.ToString();
                     if (x < 10)
-                        Console.WriteLine("M[{0}] = {1}", primes[i], strPow2Sub1);
+                        WriteLine("M[{0}] = {1}", primes[i], strPow2Sub1);
                     else
-                        Console.WriteLine("M[{0}] = {1}...{2}", primes[i], strPow2Sub1.Substring(0, 12), strPow2Sub1.Substring(strPow2Sub1.Length - 12, 12));
+                        WriteLine("M[{0}] = {1}...{2}", primes[i], strPow2Sub1.Substring(0, 12), strPow2Sub1.Substring(strPow2Sub1.Length - 12, 12));
                     x++;
-                    Console.WriteLine("elapsed time: {0} ms\n", sw1.ElapsedMilliseconds);
+                    WriteLine("elapsed time: {0} ms\n", sw1.ElapsedMilliseconds);
                     sw1.Restart();
                 }
                 if (n < x)
@@ -576,16 +672,16 @@ namespace RSABigInt
             BigInteger N = P * Q;
             BigInteger e = new BigInteger(65537);
             BigInteger phiN = (P - 1) * (Q - 1);
-            //Console.WriteLine("GCD({0}, \n    {1}) = {2}\n", phiN.ToString(), N, BigInteger.GreatestCommonDivisor(phiN, N));
+            //WriteLine("GCD({0}, \n    {1}) = {2}\n", phiN.ToString(), N, BigInteger.GreatestCommonDivisor(phiN, N));
 
             BigInteger d = InverseMod(e, phiN);
 
-            Console.WriteLine("RSA_Numbers()\n");
-            Console.WriteLine("P = {0}", P.ToString());
-            Console.WriteLine("Q = {0}", Q.ToString());
-            Console.WriteLine("N = {0}", N.ToString());
-            Console.WriteLine("e = {0}", e.ToString());
-            Console.WriteLine("d = {0}", d.ToString());
+            WriteLine("RSA_Numbers()\n");
+            WriteLine("P = {0}", P.ToString());
+            WriteLine("Q = {0}", Q.ToString());
+            WriteLine("N = {0}", N.ToString());
+            WriteLine("e = {0}", e.ToString());
+            WriteLine("d = {0}", d.ToString());
 
             BigInteger enc = BigInteger.ModPow(3126225153, e, N);
 
@@ -602,8 +698,8 @@ namespace RSABigInt
             //BigInteger dec = m2 + h * Q;
 
             BigInteger dec = BigInteger.ModPow(enc, d, N);
-            Console.WriteLine("enc = {0}", enc.ToString());
-            Console.WriteLine("dec = {0}\n", dec.ToString());
+            WriteLine("enc = {0}", enc.ToString());
+            WriteLine("dec = {0}\n", dec.ToString());
         }
 
         public void ModPow_Misc_Stuff()
@@ -622,8 +718,14 @@ namespace RSABigInt
             sw1.Restart();
             BigInteger T2 = BigInteger.ModPow(new BigInteger(13), T1 - 1, T1);
             sw1.Stop();
-            Console.WriteLine("ModPow time: {0} ms\n", sw1.ElapsedMilliseconds);                // ModPow time: 12453 ms
+            WriteLine("ModPow time: {0} ms\n", sw1.ElapsedMilliseconds);                // ModPow time: 12453 ms
             double LogT2 = BigInteger.Log10(T2);
+
+            //WriteLine("sqrt(2) = {0}\n", c.SquareRoot(BigInteger.Parse("2" + new String('0', 10000))));
+            //int n = 13017;  //7921;   // 1789;   // 3607;
+            //WriteLine("fact({1}) = {0}\n", c.Factorial(n).ToString(), n);
+            //WriteLine("fibonacci({1}) = {0}\n", c.Fibonacci(n).ToString(), n);
+
         }
 
         BigInteger g (BigInteger x, BigInteger n, int a) 
@@ -653,20 +755,20 @@ namespace RSABigInt
                     x_ = x * x + a;
                     x = BigInteger.Remainder(x_, n);
 			        //x = gx(Int64.Parse(x.ToString()), Int64.Parse(n.ToString()), a);
-                    //Console.WriteLine("x = {0}", (x-x_fixed).ToString());
+                    //WriteLine("x = {0}", (x-x_fixed).ToString());
 			        count++;
 			        h = BigInteger.GreatestCommonDivisor(x - x_fixed, n);
-                    //Console.WriteLine("h = {0}", h.ToString());
+                    //WriteLine("h = {0}", h.ToString());
 		        }
  
 		        if (h != 1)
 			        break;
  
 		        cycle_size *= 2;
-                Console.WriteLine("cycle_size = {0,-8}\tx = {1}", cycle_size, x);
+                WriteLine("cycle_size = {0,-8}\tx = {1}", cycle_size, x);
 		        x_fixed = x;
 	        }
-            Console.WriteLine("count = {0}\n", count);
+            WriteLine("count = {0}\n", count);
         	return h;
         }
 
@@ -692,14 +794,14 @@ namespace RSABigInt
             //N1 = new BigInteger(12546257);
             const int a = 1;
 
-            Console.WriteLine("Pollard_Rho_Test()");
+            WriteLine("Pollard_Rho_Test()");
             sw1.Restart();
             BigInteger P1 = Pollard_Rho(N1, a);
             sw1.Stop();
             
             BigInteger Q1 = N1 / P1;
-            Console.WriteLine("Pollard_Rho({0}, {3}) = {1} x {2}", N1, P1, Q1, a);
-            Console.WriteLine("Time: {0} ms\n", sw1.ElapsedMilliseconds);
+            WriteLine("Pollard_Rho({0}, {3}) = {1} x {2}", N1, P1, Q1, a);
+            WriteLine("Time: {0} ms\n", sw1.ElapsedMilliseconds);
         }
 
         public void Smooth_Nums_Test(string S1)
@@ -708,26 +810,63 @@ namespace RSABigInt
             //N = BigInteger.Parse("21818232425302600378616644247667406319");
             // 2495.8 s, 2620 primes
             // 7217.7 s, 2122 primes, 4244 smooth numbers
+
+            // NB - 8 logical cores!
             //Factor base: 1732 primes.
             //Collected 1906 smooth numbers.
             //Elapsed time: 1002.0 s
 
+            //Factor base: 2494 primes.
+            //Collected 2744 smooth numbers.
+            //Elapsed time: 1098.2 s
+
+            //Factor base: 2494 primes.
+            //Collected 2744 smooth numbers.
+            //Elapsed time: 1015.9 s
+
+            //Factor base: 2494 primes.
+            //Collected 2744 smooth numbers.
+            //Elapsed time: 2883.8 s
+
+
             //N = BigInteger.Parse("16780348553824466403143254714822486311526698791663230901013034295820739731481287491453090350078076622143");
-            // 
-            //N = BigInteger.Parse("10218568504117913286880427471505442091");
+            //             N = BigInteger.Parse("10218568504117913286880427471505442091");                 // is a prime number!
             // 7551.6 s, 6055 primes
 
             //N = BigInteger.Parse("1152656570285234495703667671274025629");
             // 2888.0 s, 1086 primes        2567.8 s, 1593 primes       2613.5 s, 1803 primes       2693.4 s, 2200 primes       3103.5 s, 6059 primes 
             // 2120.8 s, 1086 primes        2017.5 s, 2570 primes      (command-line: Debug\RSABigInt.exe)            
             //                                  2022.9 s, 2570 primes      (command-line: Debug\RSABigInt.exe)
+            // Factor base: 3340 primes.
+            // Collected 3674 smooth numbers.
+            // Elapsed time: 2086.6 s
+
+            //Factor base: 1986 primes.
+            //Collected 2184 smooth numbers.
+            //Elapsed time: 1972.6 s
+
+            //Factor base: 1986 primes.
+            //Collected 2184 smooth numbers.
+            //Elapsed time: 1768.9 s
+
 
             // 1898.6 s, 2923 primes, 3215 smooth numbers.
             // 5355.5 s, 2099 primes, 4198 smooth numbers          (command-line: Debug\RSABigInt.exe)
             // 5531.2 s, 1086 primes, 2172 smooth numbers.         (command-line: Debug\RSABigInt.exe)
             // 5818.4 s, 947 primes, 1894 smooth numbers.          (command-line: Debug\RSABigInt.exe)
 
+
             //N = BigInteger.Parse("78029259347625822354842824158838188449");
+            //Factor base: 3804 primes.
+            //Collected 4184 smooth numbers.
+            //Elapsed time: 10628.0 s
+
+            // NB - 8 logical cores!
+            //Factor base: 3804 primes.
+            //Collected 4184 smooth numbers.
+            //Elapsed time: 4142.7 s
+
+
             //N = BigInteger.Parse("3851667332709411289323864692105059");                 
             // 1528.2 s, 1801 primes         1617.0 s, 1018 primes        1409.1 s, 1018 primes
             //N = BigInteger.Parse("3851667332709411289323864692105059");
@@ -739,7 +878,7 @@ namespace RSABigInt
             // 3149.7 s, 899 primes, 1798 smooth numbers.
 
 
-            N = BigInteger.Parse("43272494503935639032000984197");
+            //N = BigInteger.Parse("43272494503935639032000984197");
             // SmoothNumbers
             // 2315.5 s, 286 primes, 572 smooth numbers.
             // 163.0 s,   610 primes
@@ -753,15 +892,10 @@ namespace RSABigInt
             // 115.3 s,  610 primes
             // 111.0 s, 715 primes
             // 109.9 s, 740 primes
-            
-            // Factor base: 1199 primes.
-            // Collected 1318 smooth numbers.
-            // Elapsed time: 182.9 s
-            
             // 254.0 s, 4814 primes
 
             //Smooth_Numbers("990632981767960443643259");                           // 20.0 s,   154 primes         10.5 s, 596 primes           16.4 s, 1117 primes 
-            //N = BigInteger.Parse("990632981767960443643259");                           // 9.9 s, 596 primes          14.8 s, 1117 primes
+            //N = BigInteger.Parse("990632981767960443643259");                           //                             9.9 s, 596 primes          14.8 s, 1117 primes
 
             //N = BigInteger.Parse("462717344089999398416479");                           // 5.9 s,    269 primes
             // 34.1 s, 126 primes, 252 smooth numbers
@@ -773,7 +907,11 @@ namespace RSABigInt
             //N = BigInteger.Parse("802846957519667581");
             //N = BigInteger.Parse("12546257");
             // this one will take HOURS!
+
             //N = BigInteger.Parse("2017075389938133575596113187311764342781574681");
+            // ECM.html: 26 s
+            //2017075389938133575596113187311764342781574681 = 13976952717313892280427 x 144314388889610379224203
+
 
             // still takes HOURS!
             //N = BigInteger.Parse("4667112842259357358945637211043535865743957407");
@@ -806,9 +944,14 @@ namespace RSABigInt
             // Elapsed time: 37.2 s
             //N = BigInteger.Parse("30054730572675466537888216717");
 
+            // N = 2^2^7+1
+            //N = BigInteger.Parse("340282366920938463463374607431768211457");
+
+            // "9251887165329150354056716315122396153271557067859755802728429989905317141127"
+            N = BigInteger.Parse(S1);
 
             double Temp = BigInteger.Log(N);
-            uint sieve_max= (uint)Math.Exp(Math.Sqrt(Temp * Math.Log(Temp)) * 0.6);        // twiddle-factor
+            uint sieve_max = (uint)Math.Exp(Math.Sqrt(Temp * Math.Log(Temp)) * 0.53);        // twiddle-factor
             prime_sieve(sieve_max);
 
             //uint SieveLimit = (uint)Math.Exp(8.5 + 0.015 * Temp);
@@ -818,14 +961,15 @@ namespace RSABigInt
             //Smooth_Numbers(N);
             Smooth_Numbers2(N);
 
-            Console.Write("Press Enter: ");
-            Console.ReadLine();
+            //Write("Press Enter: ");
+            //Console.ReadLine();
 
             Process_Matrix();
             //Dump_Matrix();
             Gauss_Elimination();
             //Dump_Matrix();
-            Calculate_Factors(N);
+            //Calculate_Factors(N);
+            Calculate_Factors_Task(N);
         }
 
         void Process_Matrix()
@@ -852,7 +996,9 @@ namespace RSABigInt
                 {
                     if (matrix[i, p] > matrix[p, p])
                     {
-                        Console.WriteLine("Swap rows: {0} and {1}", p, i);
+#if _DEBUG
+                        WriteLine("Swap rows: {0} and {1}", p, i);
+#endif
                         row_swaps++;
                         for (uint j = 0; j < matrix.GetLength(1); j++)       // length of the 2nd dimension / number of columns
                         {
@@ -864,7 +1010,9 @@ namespace RSABigInt
 
                     if (matrix[i, p] == 1)                                  // Add these rows if value in pivot column is 1
                     {
-                        Console.WriteLine("Add row: {0} to row: {1}", p, i);
+#if _DEBUG
+                        WriteLine("Add row: {0} to row: {1}", p, i);
+#endif
                         row_adds++;
                         for (int j = 0; j < matrix.GetLength(1); j++)
                         {
@@ -878,45 +1026,124 @@ namespace RSABigInt
             if (sw1.ElapsedMilliseconds <= 1000)
                 strElapsed = String.Format("{0} ms", sw1.ElapsedMilliseconds);
             else
-                strElapsed = String.Format("{0:F1} s", (float)sw1.ElapsedMilliseconds / 1000);
+                strElapsed = String.Format("{0:F1} s", (float)sw1.Elapsed.Milliseconds / 1000);
 
-            Console.WriteLine("Row adds: {0}\nRow swaps: {1}\nElapsed time: {2}\n", row_adds, row_swaps, strElapsed);
+            string strValue = $"Row adds: {row_adds}\nRow swaps: {row_swaps}\nElapsed time: {strElapsed}\n";
+            WriteLine(strValue);
         }
 
         void Dump_Matrix()
         {
             for (uint i = 0; i < matrix.GetLength(0); i++)                  // number of rows
             {
-                Console.Write("{0,3}: ", i);
+                Write("{0,3}: ", i);
                 for (uint j = 0; j < matrix.GetLength(1); j++)              // number of columns
-                    Console.Write("{0} ", matrix[i, j]);
-                Console.WriteLine();
+                    Write("{0} ", matrix[i, j]);
+                WriteLine();
             }
+        }
+        ParallelLoopResult function()
+        {
+            ParallelLoopResult para_res = new ParallelLoopResult();
+            return para_res;
         }
 
         void Calculate_Factors(BigInteger N1)
         {
-            for (uint i = (uint)matrix.GetLength(0) - 1; i >= 0; i--)                  // number of rows
+            //for (uint i = (uint)matrix.GetLength(0) - 1; i >= 0; i--)                  // number of rows
+            CancellationTokenSource cancellationSource = new CancellationTokenSource();
+            ParallelOptions parallelOptions = new ParallelOptions()
             {
+                CancellationToken = cancellationSource.Token
+            };
+            ParallelLoopResult res = Parallel.For(0, matrix.GetLength(0) - 1, parallelOptions, (i, loopState) =>
+            //ParallelAlgorithms.SpeculativeFor(0, matrix.GetLength(0) - 1, parallelOptions, (i, loopState) =>
+            {
+                bool bNonNullFound = false;
                 for (uint j = 0; j < factor_base.Length; j++)
                     if (matrix[i, j] != 0)                                             // test for null vector
-                        return;                                                         
-
-                BigInteger x = 1, y = 1;
-                for (int j = factor_base.Length; j < matrix.GetLength(1); j++)
-                    if (matrix[i, j] == 1)
                     {
-                        x *= Qx[j-factor_base.Length].x;
-                        y *= Qx[j-factor_base.Length].Q_of_x;
+                        bNonNullFound = true;
+                        break;
+                        //loopState.Stop();
                     }
-                y = x - SquareRoot(y);
-                BigInteger P = BigInteger.GreatestCommonDivisor(N1, y);
-                if (P != 1 && P != N1)
+                if (!bNonNullFound)                                                     
                 {
-                    BigInteger Q = N1 / P;
-                    Console.WriteLine("\nFactors: {0}, {1}\n", P.ToString(), Q.ToString());
-                    return;
+                    // calculate smooth number from exponents, should be a perfect square
+                    BigInteger x = 1, y = 1;
+                    for (int j = factor_base.Length; j < matrix.GetLength(1); j++)
+                        if (matrix[i, j] == 1)
+                        {
+                            x *= Qx[j - factor_base.Length].x;
+                            y *= Qx[j - factor_base.Length].Q_of_x;
+                        }
+                    y = x - SquareRoot(y);
+                    BigInteger P = BigInteger.GreatestCommonDivisor(N1, y);
+                    if (P != 1 && P != N1)
+                    {
+                        BigInteger Q = N1 / P;
+                        WriteLine("\nFactors: {0}, {1}\n", P.ToString(), Q.ToString());
+                        loopState.Stop();
+                        //return;
+                    }
                 }
+
+            });
+        }
+
+        void Calculate_Factors_Task(BigInteger N1)
+        {
+            //for (uint i = (uint)matrix.GetLength(0) - 1; i >= 0; i--)                  // number of rows
+            CancellationTokenSource cancellationSource = new CancellationTokenSource();
+            Task[] sqrtTasks = new Task[matrix.GetLength(0)];
+            
+            for (int n = matrix.GetLength(0); n > 0; n--)
+            {
+                int i = n - 1;
+                sqrtTasks[i] = Task.Factory.StartNew(() =>
+                {
+                    bool bNonNullFound = false;
+                    for (uint j = 0; j < factor_base.Length; j++)
+                        if (matrix[i, j] != 0)                                             // test for null vector
+                        {
+                            bNonNullFound = true;
+                            break;
+                        }
+                    if (!bNonNullFound)
+                    {
+                        WriteLine("\nFound null vector matrix row[{0}]", i);
+                        // calculate smooth number from exponents, should be a perfect square
+                        BigInteger x = 1, y = 1;
+                        for (int j = factor_base.Length; j < matrix.GetLength(1); j++)
+                            if (matrix[i, j] == 1)
+                            {
+                                x *= Qx[j - factor_base.Length].x;
+                                y *= Qx[j - factor_base.Length].Q_of_x;
+                            }
+                        y = x - SquareRoot(y);
+                        BigInteger P = BigInteger.GreatestCommonDivisor(N1, y);
+                        if (P != 1 && P != N1)
+                        {
+                            BigInteger Q = N1 / P;
+                            WriteLine("\nThread ID #{0}\nFactors: {1}, {2}\n", Task.CurrentId, P.ToString(), Q.ToString());
+                            cancellationSource.Cancel();
+                            //return;
+                        }
+                    }
+                }, cancellationSource.Token);
+            }
+            try
+            {
+                Task.WaitAll(sqrtTasks, cancellationSource.Token);
+            }
+            catch (OperationCanceledException ex)
+            {
+                WriteLine("Caught exception: {0}\n", ex.Message);
+                WriteLine("\nOperation cancelled, done.");
+            }
+            finally
+            {
+                //cancellationSource.Dispose();
             }
         }
     }   // class MyBigInteger_Class
@@ -927,23 +1154,25 @@ namespace RSABigInt
         {
             MyBigInteger_Class c = new MyBigInteger_Class();
 
-            //Console.WriteLine("sqrt(2) = {0}\n", c.SquareRoot(BigInteger.Parse("2" + new String('0', 10000))));
-            int n = 3607;   // 1789;   // 3607;
-            //Console.WriteLine("fact({1}) = {0}\n", c.Factorial(n).ToString(), n);
-        
             Assembly assem = typeof(BigInteger).Assembly;
             BigInteger p = (BigInteger)assem.CreateInstance("System.Numerics.BigInteger");
+            p = c.TwinPrime(2);
+            BigInteger q = c.TwinPrime(2);
+            BigInteger N = p * q;
+
+            WriteLine("{0} x {1} = {2}", p, q, N);
 
             //c.TwinPrime_Test();
             //c.PrimeTriplet_Test();
             //c.Mersenne2(23);
-            c.Smooth_Nums_Test("");
+            c.Smooth_Nums_Test(N.ToString());
             //c.RSA_Numbers();
             //c.ModPow_Misc_Stuff();
             //c.Pollard_Rho_Test();
 
-            Console.Write("\nPress Enter: ");
-            Console.ReadLine();
+            Write("\nPress Enter: ");
+            ReadLine();
         }
     }   // class
+#pragma warning restore IDE1006
 }   // namespace

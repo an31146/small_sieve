@@ -2,10 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 using static System.Console;
 
-namespace segmented_sieve
+namespace segmented_sieve_v2
 {
     class Program
     {
@@ -24,75 +25,73 @@ namespace segmented_sieve
         /// @param limit         Sieve primes <= limit.
         /// @param segment_size  Size of the sieve array in bytes.
         ///
-        static void segmented_sieve(Int64 limit, int segment_size = L1D_CACHE_SIZE)
+        static void segmented_sieve(int limit, int segment_size = L1D_CACHE_SIZE)
         {
             int sqrt = (int)Math.Sqrt((double)limit);
             //double twin_prime_const = 1.0d;
-            Int64 count = (limit < 2) ? 0 : 1;
-            int s = 2;
-            int n = 3;
-
-            // vector used for sieving
-            BitArray segment = new BitArray(segment_size);
+            long count = (limit < 2) ? 0 : 1;
 
             // generate small primes <= sqrt
-            BitArray is_prime = new BitArray(sqrt + 1, true);
-            for (int i = 2; i * i <= sqrt; i++)
+            BitArray is_prime = new BitArray(limit+1, true);
+            for (int i = 2; i * i < sqrt; i++)
+            {
                 if (is_prime[i])
                     for (int j = i * i; j <= sqrt; j += i)
                         is_prime[j] = false;
-
-            List<int> primes = new List<int>();
-            List<int> next = new List<int>();
-
-            for (int low = 0; low <= limit; low += segment_size)
-            {
-                segment.SetAll(true);
-
-                // current segment = interval [low, high]
-                Int64 high = low + segment_size - 1 < limit ? low + segment_size - 1 : limit;
-
-                // store small primes needed to cross off multiples
-                for (; s * s <= high; s++)
-                    if (is_prime[s])
-                    {
-                        primes.Add(s);
-                        next.Add(s * s - low);
-                    }
-
-                // segmented sieve of Eratosthenes
-                for (int i = 1; i < primes.Count; i++)
-                {
-                    int j = next[i];
-                    for (int k = primes[i] * 2; j < segment_size; j += k)
-                        segment[j] = false;
-                    next[i] = j - segment_size;
-                }
-                for (; n <= high; n += 2)
-                    count += segment[n - low] ? 1 : 0;
-                    /*if (segment[n - low])
-                    {
-                        WriteLine("{0,10}", n);
-                        count++;
-                        //twin_prime_const *= 1.0d - 1.0d / (double)((n - 1) * (n - 1));
-                    }*/
             }
 
-            WriteLine("\n\n{0} primes found.", count);
+            List<int> primes = new List<int>();
+            for (int i = 2; i < sqrt; i++)
+            {
+                if (is_prime[i])
+                {
+                    primes.Add(i);
+                    //Write($"{i,5}");
+                }
+            }
+            //WriteLine();
+
+            //List<int> extra_primes = new List<int>();
+            ParallelOptions options = new ParallelOptions();
+            options.MaxDegreeOfParallelism = 4;
+            //int extraPrimes = 0;
+            Parallel.ForEach(primes, options, (int l) =>
+            {
+                //Write($"{l,5}");
+
+                lock (is_prime)
+                {
+                    for (int i = l * l; i <= limit; i += l)
+                        is_prime[i] = false;
+                }
+            });
+            WriteLine();
+
+            Parallel.For(sqrt, limit, (int i) =>
+            //for (int i = sqrt; i < limit; i++)
+            {
+                if (is_prime[i])
+                    lock (primes)
+                    {
+                        primes.Add(i);
+                        //Write($"{i,10}");
+                    }
+            });
+            WriteLine("\n\n{0} primes found.", primes.Count);
             //cout << "twin prime constant: " << twin_prime_const << endl;
         }
         static void Main(string[] args)
         {
             // generate the primes below this number
-            Int64 limit = 100000000;
+            int limit = 1000000000;
             Stopwatch clock = new Stopwatch();
 
             if (args.Length >= 1)
-                limit = Int64.Parse(args[0]);
+                limit = int.Parse(args[0]);
 
             int size = L1D_CACHE_SIZE;
             if (args.Length >= 2)
-                size = Int32.Parse(args[1]);
+                size = int.Parse(args[1]);
 
             clock.Start();
             segmented_sieve(limit, size);

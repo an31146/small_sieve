@@ -6,6 +6,7 @@ using System.Linq;
 
 using static System.Console;
 
+#pragma warning disable IDE1006
 namespace PLINQ_primes
 {
     public class Program
@@ -26,8 +27,7 @@ namespace PLINQ_primes
                     bits[j] = true;
             }
 
-            _primes = new List<int>();
-            _primes.Add(2);
+            _primes = new List<int> { 2 };
 
             for (j = 3; j <= S; j++)
                 if (!bits[j])
@@ -101,6 +101,7 @@ namespace PLINQ_primes
         }
     }
 }
+#pragma warning restore IDE1006
 
 /*
 Sun 09/03/2017 10:54:35

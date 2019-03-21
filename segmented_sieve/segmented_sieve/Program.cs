@@ -67,13 +67,13 @@ namespace segmented_sieve
                     next[i] = j - segment_size;
                 }
                 for (; n <= high; n += 2)
-                    count += segment[n - low] ? 1 : 0;
-                //      if (segment[n - low])
-                //      {
-                //        //cout << setw(10) << n;
-                //        count++;
-                //        twin_prime_const *= 1.0d - 1.0d / (double)((n-1) * (n-1));
-                //      }  
+                    //count += segment[n - low] ? 1 : 0;
+                    if (segment[n - low])
+                    {
+                        Console.Write("{0,10}", n);
+                        count++;
+                        //twin_prime_const *= 1.0d - 1.0d / (double)((n - 1) * (n - 1));
+                    }
             }
 
             Console.WriteLine("\n{0} primes found.", count);
